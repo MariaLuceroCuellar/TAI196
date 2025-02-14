@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from typing import List
 
 app = FastAPI(
@@ -7,12 +6,6 @@ app = FastAPI(
     description="María Lucero Cuellar Araujo",
     version="1.0.1"
 )
-
-# Modelo de datos con Pydantic
-class Usuario(BaseModel):
-    id: int
-    nombre: str
-    edad: int
 
 usuarios = [
     {"id": 1, "nombre": "Lucero", "edad": 21},
@@ -24,16 +17,37 @@ usuarios = [
 @app.get("/", tags=["Inicio"])
 def main():
     return {"Hola FastAPI": "Lucero"}
-
+#endpoint para consultar todos los usuarios
 @app.get("/usuarios", tags=["Operaciones CRUD"])
 def ConsultarTodos():
     return {"Todos los usuarios registrados": usuarios}
 
+#endpoint para consultar un usuario por su id
 @app.post("/usuarios/", tags=["Operaciones CRUD"])
-def AgregarUsuario(usuarionuevo: Usuario):  # Usa el modelo Usuario en lugar de dict
+def AgregarUsuario(usuario: dict):  # Usa el modelo Usuario en lugar de dict
     for usr in usuarios:
-        if usr["id"] == usuarionuevo.id:
+        if usr["id"] == usuario.get("id"):
             raise HTTPException(status_code=400, detail="El usuario ya existe")
     
-    usuarios.append(usuarionuevo.dict())  # Convierte el modelo a diccionario antes de agregarlo
-    return {"Usuario Agregado": "Exitosamente"}
+    usuarios.append(usuario)  
+    return usuario
+
+#endpoint para actualizar un usuario por su id
+@app.put("/usuarios/{id}", tags=["Operacion de actualización"])
+def ActualizarUsuario(id: int,  usuario:dict):
+    for usr in usuarios:
+        if usr["id"] == id:
+            usr.update(usuario)
+            return {"Usuario actualizado": usr}
+    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        
+#endpoint para eliminar un usuario por su id    
+@app.delete("/usuarios/{id}", tags=["Operacion de eliminación"])
+def EliminarUsuario(id: int):
+    for usr in usuarios:
+        if usr["id"] == id:
+            usuarios.remove(usr)
+            return {"Usuario eliminado": usr}
+    raise HTTPException(status_code=400, detail="El usuario no existe")
+
