@@ -34,8 +34,29 @@ def obtener_tarea(id: int):
 #Endpoint para agregar una tarea
 @app.post("/tareas", tags=["Operaciones CRUD Agregar tareas"])
 def agregar_tarea(tarea: dict):
+    if tarea in tareas:
+        raise HTTPException(status_code=400, detail="La tarea ya existe")
     tareas.append(tarea)
+    
     return tarea
 
+#Endpoint para actualizar una tarea
+@app.put("/tareas/{id}", tags=["Operaciones CRUD Actualizar tareas"])
+def actualizar_tarea(id: int, tarea: dict):
+    for tar in tareas:
+        if tar["id"] == id:
+            tar.update(tarea)
+            return {"Tarea actualizada": tar}
+    raise HTTPException(status_code=400, detail="Tarea no encontrada")
+
+#Endpoint para eliminar una tarea por su id
+@app.delete("/tareas/{id}", tags=["Operaciones CRUD Eliminar tareas"])
+def eliminar_tarea(id: int):
+    for tar in tareas:
+        if tar["id"] == id:
+            tareas.remove(tar)
+            return {"Tarea eliminada": tar}
+        
+    raise HTTPException(status_code=400, detail="Tarea no encontrada")
 
 
