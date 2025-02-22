@@ -60,3 +60,18 @@ def eliminar_tarea(id: int):
     raise HTTPException(status_code=400, detail="Tarea no encontrada")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
