@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
+from modelsPydantic import modelUsuario
 
 
 app = FastAPI(
@@ -9,18 +10,14 @@ app = FastAPI(
     version="1.0.1"
 )
 
-#Modelo para validaciones del usuario
-class modelUsuario(BaseModel):
-    id: int
-    nombre: str
-    edad: int
-    correo: str
+
+
 
 usuarios = [
-    {"id": 1, "nombre": "Lucero", "edad": 21, "correo": "lucero@example"},
-    {"id": 2, "nombre": "Estrella", "edad": 22,"correo": "estrella@example"},
-    {"id": 3, "nombre": "Lalin", "edad": 23, "correo": "lalin@example"},
-    {"id": 4, "nombre": "Ligorin", "edad": 24, "correo": "ligorin@example"},
+    {"id": 1, "nombre": "Lucero", "edad": 21, "correo": "lucero@example.com"},
+    {"id": 2, "nombre": "Estrella", "edad": 22,"correo": "estrella@example.com"},
+    {"id": 3, "nombre": "Lalin", "edad": 23, "correo": "lalin@example.com"},
+    {"id": 4, "nombre": "Ligorin", "edad": 24, "correo": "ligorin@example.com"},
 ]
 
 @app.get("/", tags=["Inicio"])
@@ -44,10 +41,10 @@ def AgregarUsuario(usuarionuevo: modelUsuario):  # Usa el modelo Usuario en luga
 #endpoint para actualizar un usuario por su id
 @app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
 def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
-    for usr in usuarios:
+    for index, usr in usuarios:
         if usr["id"] == id:
-            usr.update(usuario_actualizado)
-            return {"Usuario actualizado": usr}
+            usr[index] = usuario_actualizado.model_dump()
+            return [index]
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
         
