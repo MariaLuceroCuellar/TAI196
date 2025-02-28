@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
-from modelsPydantic import modelUsuario
+from modelsPydantic import modelUsuario, modelAuth
+from tokenGen import createToken
+
+
 
 
 app = FastAPI(
@@ -23,6 +26,16 @@ usuarios = [
 @app.get("/", tags=["Inicio"])
 def main():
     return {"Hola FastAPI": "Lucero"}
+
+@app.post('/auth', tags=["Autentificación"])
+def login(autorizado: modelAuth):
+    if autorizado.correo == "lucero@example.com" and autorizado.passw == "12345678":
+        token: str = createToken(autorizado.model_dump())
+        return {"Token Autorizado ": token}
+    else:
+        return {"Error": "Usuario incorrecto "}
+
+
 #endpoint para consultar todos los usuarios
 @app.get("/usuarios", response_model = List[modelUsuario], tags=["Operaciones CRUD"])
 def ConsultarTodos():
