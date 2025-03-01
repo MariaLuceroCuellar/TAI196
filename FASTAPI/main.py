@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from typing import List, Optional
 from pydantic import BaseModel
 from modelsPydantic import modelUsuario, modelAuth
 from tokenGen import createToken
+from middlewares import BearerJWT
 
 
 
@@ -31,15 +33,17 @@ def main():
 def login(autorizado: modelAuth):
     if autorizado.correo == "lucero@example.com" and autorizado.passw == "12345678":
         token: str = createToken(autorizado.model_dump())
-        return {"Token Autorizado ": token}
+        print(token)
+        return JSONResponse(content={"token": token})
     else:
         return {"Error": "Usuario incorrecto "}
 
 
 #endpoint para consultar todos los usuarios
-@app.get("/usuarios", response_model = List[modelUsuario], tags=["Operaciones CRUD"])
+@app.get("/usuarios", dependencies=[Depends(BearerJWT())] ,response_model = List[modelUsuario], tags=["Operaciones CRUD"])
 def ConsultarTodos():
     return usuarios
+
 
 #endpoint para agregar un usuario por su id
 @app.post("/usuarios/", response_model = modelUsuario, tags=["Operaciones CRUD"])
