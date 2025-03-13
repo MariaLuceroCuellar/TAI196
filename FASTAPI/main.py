@@ -15,9 +15,6 @@ app = FastAPI(
     version="1.0.1"
 )
 
-
-
-
 usuarios = [
     {"id": 1, "nombre": "Lucero", "edad": 21, "correo": "lucero@example.com"},
     {"id": 2, "nombre": "Estrella", "edad": 22,"correo": "estrella@example.com"},
