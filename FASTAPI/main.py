@@ -5,15 +5,19 @@ from pydantic import BaseModel
 from modelsPydantic import modelUsuario, modelAuth
 from tokenGen import createToken
 from middlewares import BearerJWT
+from DB.conexion import Session, engine, Base
+from models.modelsDB import User
 
 
-
+#Levanta las tablas defenidas en los modelos
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Mi primera API-196",
     description="María Lucero Cuellar Araujo",
     version="1.0.1"
 )
+
 
 usuarios = [
     {"id": 1, "nombre": "Lucero", "edad": 21, "correo": "lucero@example.com"},
@@ -45,13 +49,17 @@ def ConsultarTodos():
 #endpoint para agregar un usuario por su id
 @app.post("/usuarios/", response_model = modelUsuario, tags=["Operaciones CRUD"])
 def AgregarUsuario(usuarionuevo: modelUsuario):  # Usa el modelo Usuario en lugar de dict
-    for usr in usuarios:
-        if usr["id"] == usuarionuevo.id:
-            raise HTTPException(status_code=400, detail="El usuario ya existe")
-    
-    usuarios.append(usuarionuevo)  
-    return usuarionuevo
-
+    db = Session()
+    try:
+        db.add(User(**usuarionuevo.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201, content={"mensaje": "Usuario creado", "usuario": usuarionuevo.model_dump()})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"mensaje": "Error al crear el usuario", "error": str(e)})
+    finally:
+        db.close()
+        
 #endpoint para actualizar un usuario por su id
 @app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
 def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
