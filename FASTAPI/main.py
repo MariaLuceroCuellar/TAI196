@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from typing import List, Optional
 from pydantic import BaseModel
 from modelsPydantic import modelUsuario, modelAuth
@@ -30,20 +31,37 @@ usuarios = [
 def main():
     return {"Hola FastAPI": "Lucero"}
 
-@app.post('/auth', tags=["Autentificación"])
-def login(autorizado: modelAuth):
-    if autorizado.correo == "lucero@example.com" and autorizado.passw == "12345678":
-        token: str = createToken(autorizado.model_dump())
-        print(token)
-        return JSONResponse(content={"token": token})
-    else:
-        return {"Error": "Usuario incorrecto "}
+
 
 
 #endpoint para consultar todos los usuarios
-@app.get("/usuarios", dependencies=[Depends(BearerJWT())] ,response_model = List[modelUsuario], tags=["Operaciones CRUD"])
+# @app.get("/usuarios", dependencies=[Depends(BearerJWT())] ,response_model = List[modelUsuario], tags=["Operaciones CRUD"])
+@app.get("/usuarios", tags=["Operaciones CRUD"])
 def ConsultarTodos():
-    return usuarios
+    db = Session()
+    try:
+        consulta = db.query(User).all()
+        return JSONResponse(content = jsonable_encoder(consulta))
+    except Exception as x:
+        return JSONResponse(status_code=500, content={"mensaje": "No fue posible consultar", "error": str(x)})
+
+        
+    finally:
+        db.close()
+
+@app.get("/usuarios/{id}", tags=["Consultar un usuario por ID"])
+def ConsultarUno(id:int):
+    db = Session()
+    try:
+        consulta = db.query(User).filter(User.id == id).first()
+        if not consulta:
+            return JSONResponse(status_code=404, content={"mensaje": "Usuario no encontrado"})
+        return JSONResponse(content = jsonable_encoder(consulta))
+    except Exception as x:
+        return JSONResponse(status_code=500, content={"mensaje": "No fue posible consultar", "error": str(x)})
+
+    finally:
+        db.close()
 
 
 #endpoint para agregar un usuario por su id
@@ -61,21 +79,29 @@ def AgregarUsuario(usuarionuevo: modelUsuario):  # Usa el modelo Usuario en luga
         db.close()
         
 #endpoint para actualizar un usuario por su id
-@app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
-def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
-    for index, usr in usuarios:
-        if usr["id"] == id:
-            usr[index] = usuario_actualizado.model_dump()
-            return [index]
-    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+# @app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
+# def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
+#     for index, usr in usuarios:
+#         if usr["id"] == id:
+#             usr[index] = usuario_actualizado.model_dump()
+#             return [index]
+#     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
         
-#endpoint para eliminar un usuario por su id    
-@app.delete("/usuarios/{id}", tags=["Operacion de eliminación"])
-def EliminarUsuario(id: int):
-    for usr in usuarios:
-        if usr["id"] == id:
-            usuarios.remove(usr)
-            return {"Usuario eliminado": usr}
-    raise HTTPException(status_code=400, detail="El usuario no existe")
+# #endpoint para eliminar un usuario por su id    
+# @app.delete("/usuarios/{id}", tags=["Operacion de eliminación"])
+# def EliminarUsuario(id: int):
+#     for usr in usuarios:
+#         if usr["id"] == id:
+#             usuarios.remove(usr)
+#             return {"Usuario eliminado": usr}
+#     raise HTTPException(status_code=400, detail="El usuario no existe")
 
+@app.post('/auth', tags=["Autentificación"])
+def login(autorizado: modelAuth):
+    if autorizado.correo == "lucero@example.com" and autorizado.passw == "12345678":
+        token: str = createToken(autorizado.model_dump())
+        print(token)
+        return JSONResponse(content={"token": token})
+    else:
+        return {"Error": "Usuario incorrecto "}
