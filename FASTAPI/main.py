@@ -79,6 +79,49 @@ def AgregarUsuario(usuarionuevo: modelUsuario):  # Usa el modelo Usuario en luga
         db.close()
         
 #endpoint para actualizar un usuario por su id
+@app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
+def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
+    db = Session()
+    try:
+        consulta = db.query(User).filter(User.id == id).first()
+        if not consulta:
+            return JSONResponse(status_code=404, content={"mensaje": "Usuario no encontrado"})
+        
+        for key, value in usuario_actualizado.model_dump().items():
+            setattr(consulta, key, value)
+        
+        db.commit()
+        return JSONResponse(status_code=200, content={"mensaje": "Usuario actualizado", "usuario": usuario_actualizado.model_dump()})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"mensaje": "Error al actualizar el usuario", "error": str(e)})
+    finally:
+        db.close()
+        
+#endpoint para eliminar un usuario por su id
+@app.delete("/usuarios/{id}", tags=["Operacion de eliminación"])
+def EliminarUsuario(id: int):
+    db = Session()
+    try:
+        consulta = db.query(User).filter(User.id == id).first()
+
+        if not consulta:
+            return JSONResponse(status_code=404, content={"mensaje": "Usuario no encontrado"})
+        
+        usuario_eliminado = jsonable_encoder(consulta)
+        db.delete(consulta)
+        db.commit()
+        return JSONResponse(status_code=200, content={"mensaje": "Usuario eliminado", "usuario": usuario_eliminado})
+
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"mensaje": "Error al eliminar el usuario", "error": str(e)})
+    finally:
+        db.close()
+        
+        
+        
+#endpoint para actualizar un usuario por su id
 # @app.put("/usuarios/{id}", response_model=modelUsuario, tags=["Operacion de actualización"])
 # def ActualizarUsuario(id: int,  usuario_actualizado:modelUsuario):
 #     for index, usr in usuarios:
